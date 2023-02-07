@@ -1,15 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart' as path;
-import 'package:path_provider_linux/path_provider_linux.dart'
-    as pathProviderLinux;
-import 'package:path_provider_windows/path_provider_windows.dart'
-    as pathProvderWindows;
+import 'package:path_provider_linux/path_provider_linux.dart' as pathProviderLinux;
+import 'package:path_provider_windows/path_provider_windows.dart' as pathProvderWindows;
 
 ///[MimeType] is an enum for adding filetype for HTML Blob
 enum MimeType {
@@ -100,8 +97,7 @@ class FileSaver {
 
   String _somethingWentWrong =
       "Something went wrong, please report the issue https://www.github.com/incrediblezayed/file_saver/issues";
-  String _issueLink =
-      "https://www.github.com/incrediblezayed/file_saver/issues";
+  String _issueLink = "https://www.github.com/incrediblezayed/file_saver/issues";
 
   String _saveFile = "saveFile";
   String _saveAs = "saveAs";
@@ -178,12 +174,10 @@ class FileSaver {
       } else if (Platform.isMacOS) {
         _path = (await path.getDownloadsDirectory())?.path;
       } else if (Platform.isWindows) {
-        pathProvderWindows.PathProviderWindows pathWindows =
-            pathProvderWindows.PathProviderWindows();
+        pathProvderWindows.PathProviderWindows pathWindows = pathProvderWindows.PathProviderWindows();
         _path = await pathWindows.getDownloadsPath();
       } else if (Platform.isLinux) {
-        pathProviderLinux.PathProviderLinux pathLinux =
-            pathProviderLinux.PathProviderLinux();
+        pathProviderLinux.PathProviderLinux pathLinux = pathProviderLinux.PathProviderLinux();
         _path = await pathLinux.getDownloadsPath();
       }
     } on Exception catch (e) {
@@ -214,18 +208,12 @@ class FileSaver {
   /// mimeType (Mainly required for web): MimeType from enum MimeType..
   ///
   /// More Mimetypes will be added in future
-  Future<String> saveFile(String name, Uint8List bytes, String ext,
-      {MimeType mimeType = MimeType.OTHER}) async {
+  Future<String> saveFile(String name, Uint8List bytes, String ext, {MimeType mimeType = MimeType.OTHER}) async {
     String mime = _getType(mimeType);
     String _directory = _somethingWentWrong;
     try {
       if (kIsWeb) {
-        Map<String, dynamic> data = <String, dynamic>{
-          "bytes": bytes,
-          "name": name,
-          "ext": ext,
-          "type": mime
-        };
+        Map<String, dynamic> data = <String, dynamic>{"bytes": bytes, "name": name, "ext": ext, "type": mime};
         String args = json.encode(data);
         bool? downloaded = await _channel.invokeMethod<bool>(_saveFile, args);
         if (downloaded!) {
@@ -241,12 +229,9 @@ class FileSaver {
         String _path = "";
         _path = await _getDirectory() ?? "";
         if (_path == "") {
-          print(
-              "The path was found null or empty, please report the issue at " +
-                  _issueLink);
+          print("The path was found null or empty, please report the issue at " + _issueLink);
         } else {
-          String filePath =
-              _path + '/' + name + (ext == "" ? ext : ("." + ext));
+          String filePath = _path + '/' + name + (ext == "" ? ext : ("." + ext));
           final File _file = File(filePath);
           await _file.writeAsBytes(bytes);
           bool _exist = await _file.exists();
@@ -274,15 +259,14 @@ class FileSaver {
   ///
   /// More Mimetypes will be added in future
   /// Note:- This Method only works on Android for time being and other platforms will be added soon
-  Future<String> saveAs(
-      String name, Uint8List bytes, String ext, MimeType mimeType) async {
+  Future<String> saveAs(String name, Uint8List bytes, String ext, MimeType mimeType) async {
     String _mimeType = _getType(mimeType);
-    Map<dynamic, dynamic> data = {
-      'name': mimeType == MimeType.OTHER ? name + "." + ext : name,
-      'ext': ext,
-      'bytes': bytes,
-      'type': _mimeType
-    };
+    String filename = name;
+    // Android ignores the extension property, so we need to append the extension.
+    if (Platform.isAndroid && mimeType == MimeType.OTHER) {
+      filename += "." + ext;
+    }
+    Map<dynamic, dynamic> data = {'name': filename, 'ext': ext, 'bytes': bytes, 'type': _mimeType};
     String _path = await _openFileManager(data);
     return _path;
   }
